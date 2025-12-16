@@ -1,0 +1,262 @@
+import java.io.*;
+import javax.sound.midi.*;
+import java.util.*;
+import processing.sound.*;
+import processing.video.*;
+
+//===web cam load ===
+Capture cam;
+
+//=== image load 관련 전역 변수 ===
+//PImage redGerbera;
+
+
+// ====== 전역 재생 파라미터 ======
+float BPM = 132;          // 고정 BPM (가변 템포면 아래 TempoMap로 대체)
+double msPerTick = 0;     // tick -> ms 변환 계수 (BPM/PPQ 기반)
+long t0 = 0;              // 재생 시작 기준 시간(ms)
+
+// ====== 트랙 세팅 ======
+int[] trackIndices = {1, 2};  // 사용할 MIDI 트랙 인덱스들
+SynthTrack[] tracks;          // 트랙 객체 배열
+
+// ====== 간단 시각화용 ======
+PFont fnt;
+boolean flashOn = false;
+int flashTimer = 0;
+
+//===mp3 load===
+SoundFile musicFile;
+
+void setup() {
+  size(1000, 600);
+  //mp3 load
+  musicFile=new SoundFile(this, "lov3.mp3");
+  //photo load
+  redGerbera=loadImage("redGerbera.png");
+
+  // MIDI 로드 & 트랙 초기화
+  Sequence seq = loadMidiSequence("lov3.mid");
+  int ppq = seq.getResolution();
+
+  // 고정 BPM 기반 tick→ms (가변 템포면 TempoMap 사용)
+  msPerTick = 60000.0 / (BPM * ppq);
+
+  // 트랙 생성
+  tracks = new SynthTrack[trackIndices.length];
+  for (int i = 0; i < trackIndices.length; i++) {
+    tracks[i] = new SynthTrack("Track-" + trackIndices[i], color(40 + 80*i, 200 - 40*i, 180));
+  }
+
+  // 각 트랙에 이벤트 채우기
+  Track[] midiTracks = seq.getTracks();
+  for (int i = 0; i < trackIndices.length; i++) {
+    int ti = trackIndices[i];
+    if (ti < 0 || ti >= midiTracks.length) {
+      println("[WARN] 해당 인덱스 트랙 없음:", ti);
+      continue;
+    }
+    fillNoteEvents(midiTracks[ti], tracks[i].events);
+    tracks[i].sortByTick();  // 안전하게 tick 순 정렬
+  }
+
+  startPlayback();
+}
+
+void draw() {
+  // 배경 (flash 효과)
+  if (flashOn) {
+    background(30, 30, 30);
+    flashTimer--;
+    if (flashTimer <= 0) flashOn = false;
+  } else {
+    background(18);
+  }
+
+  long now = millis() - t0;
+
+  // 모든 트랙 업데이트
+  boolean anyPitchChanged = false;
+  for (int i = 0; i < tracks.length; i++) {
+    tracks[i].update(now, msPerTick);
+    if (tracks[i].pitchChanged) anyPitchChanged = true;
+  }
+  if (anyPitchChanged) doFlash(3);
+
+  // 모든 트랙 끝났으면 멈추고 싶다면:
+  // if (allFinished()) noLoop();
+}
+
+// ===== 유틸 =====
+//=== sound, midi play function ===
+void startPlayback() {
+  t0 = millis();
+  for (SynthTrack t : tracks) t.reset(); // synth track midi file play
+  if (musicFile != null) {
+    musicFile.stop();   // 항상 초기화
+    musicFile.play();   // 재생
+  }
+}
+
+boolean allFinished() {
+  for (SynthTrack t : tracks) {
+    if (!t.finished()) return false;
+  }
+  return true;
+}
+
+Sequence loadMidiSequence(String filename) {
+  try {
+    File f = new File(dataPath(filename));
+    return MidiSystem.getSequence(f);
+  }
+  catch (Exception e) {
+    e.printStackTrace();
+    exit();
+  }
+  return null; // 도달하지 않음
+}
+
+// 특정 MIDI Track에서 NOTE ON/OFF 이벤트를 뽑아 우리 이벤트 리스트에 채움
+void fillNoteEvents(Track midiTrack, ArrayList<Event> out) {
+  for (int i = 0; i < midiTrack.size(); i++) {
+    MidiEvent me = midiTrack.get(i);
+    MidiMessage mm = me.getMessage();
+    long tick = me.getTick();
+
+    if (mm instanceof ShortMessage) {
+      ShortMessage sm = (ShortMessage) mm;
+      int cmd = sm.getCommand();
+      int pitch = sm.getData1();
+      int vel = sm.getData2();
+
+      // NOTE ON (vel>0) / NOTE OFF (vel==0 or explicit NOTE_OFF)
+      if (cmd == ShortMessage.NOTE_ON && vel > 0) {
+        out.add(new Event(tick, true, pitch, vel));
+      } else if (cmd == ShortMessage.NOTE_OFF || (cmd == ShortMessage.NOTE_ON && vel == 0)) {
+        out.add(new Event(tick, false, pitch, vel));
+      }
+    }
+    // (가변 템포 지원하려면 여기서 MetaMessage type 0x51(Tempo) 읽어서 TempoMap에 저장)
+  }
+}
+
+void doFlash(int frames) {
+  flashOn = true;
+  flashTimer = frames;
+}
+
+void keyPressed() {
+  if (key == 'r' || key == 'R') startPlayback();
+}
+
+// ===== 데이터 클래스들 =====
+
+// 단일 이벤트 (tick 단위 시간, on/off, pitch, vel)
+class Event {
+  long tick;
+  boolean on;
+  int pitch;
+  int vel;
+  Event(long tick, boolean on, int pitch, int vel) {
+    this.tick = tick;
+    this.on = on;
+    this.pitch = pitch;
+    this.vel = vel;
+  }
+}
+
+// 트랙 단위 상태/로직
+class SynthTrack {
+  String name;
+  int visColor;
+
+  ArrayList<Event> events = new ArrayList<Event>();
+  ArrayList<Integer> activePitches = new ArrayList<Integer>(); // 현재 눌림 중인 피치들
+
+  int activeNotes = 0;     // 현재 활성 노트 수
+  boolean pitchChanged;    // 이번 프레임 note on/off가 있었는가
+  boolean noteOnTrig;      // 이번 프레임 note-on 트리거
+  boolean noteOffTrig;     // 이번 프레임 note-off 트리거
+  boolean synthOn = false; // 활성 노트가 1개 이상이면 true
+  int cursor = 0;          // 다음에 처리할 이벤트 인덱스
+
+  SynthTrack(String name, int visColor) {
+    this.name = name;
+    this.visColor = visColor;
+  }
+
+  void reset() {
+    activePitches.clear();
+    activeNotes = 0;
+    pitchChanged = false;
+    noteOnTrig = false;
+    noteOffTrig = false;
+    synthOn = false;
+    cursor = 0;
+  }
+
+  boolean finished() {
+    return cursor >= events.size();
+  }
+
+  void sortByTick() {
+    Collections.sort(events, new Comparator<Event>() {
+      public int compare(Event a, Event b) {
+        return Long.compare(a.tick, b.tick);
+      }
+    }
+    );
+  }
+
+  // 핵심: now(ms)까지의 모든 이벤트 처리
+  void update(long nowMs, double msPerTick) {
+    pitchChanged = false;
+    noteOnTrig = false;
+    noteOffTrig = false;
+
+    while (cursor < events.size()) {
+      Event e = events.get(cursor);
+      long eventTimeMs = (long)Math.round(e.tick * msPerTick);
+
+      if (eventTimeMs <= nowMs) {
+        // 이벤트 소비
+        cursor++;
+
+        if (e.on) {
+          if (!activePitches.contains(e.pitch)) {
+            activePitches.add(e.pitch);
+            noteOnTrig = true;
+            pitchChanged = true;
+            activeNotes++;
+          }
+        } else {
+          if (activePitches.contains(e.pitch)) {
+            activePitches.remove((Integer)e.pitch);
+            noteOffTrig = true;
+            pitchChanged = true;
+            activeNotes = max(0, activeNotes - 1);
+          }
+        }
+
+        synthOn = (activeNotes > 0);
+      } else {
+        break; // 아직 시간이 안 됨 → 다음 프레임에서 처리
+      }
+    }
+  }
+}
+
+/* ===========================================
+ 가변 템포(TempoMap) 지원 노트
+ -------------------------------------------
+ - MetaMessage type 0x51 (SetTempo): 마이크로초/쿼터노트(us/qn) 제공
+ - (tick_i, usPerQN_i) 리스트를 모아두고,
+ 이벤트 시간 eventTick의 누적 ms를 적분 형태로 계산
+ - 간단 공식:
+ 구간 i의 tick 길이 Δtick_i 를 usPerQN_i / PPQ 로 ms 변환
+ 누적합으로 eventTick 시점의 ms 계산
+ - 현재 예시는 고정 BPM 기반(msPerTick)이라 간단.
+ - 필요하면 TempoChange 클래스를 추가해서 update()에서
+ tick→ms 변환을 tempo-map 누적으로 바꾸면 됨.
+ =========================================== */
