@@ -1,8 +1,57 @@
-html, body {
-  margin: 0;
-  padding: 0;
+/* 1. 폰트 설정 */
+@font-face {
+    font-family: 'RoundedFixedsys';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
 }
 
+/* 2. 도화지 전체 세팅 (html, body) */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; 
+    background-color: #000; /* 기본 바탕은 검정 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 3. [핵심] LOV3 패턴 배경 레이어 (::before) */
+body::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    
+    /* 안전하게 인코딩된 레드 LOV3 패턴 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Ctext x='50%25' y='50%25' font-family='Arial, sans-serif' font-weight='bold' font-size='18' fill='rgba(255,0,0,0.15)' text-anchor='middle' dominant-baseline='middle'%3ELOV3%3C/text%3E%3C/svg%3E");
+    
+    background-repeat: repeat;
+    transform: rotate(-45deg); /* 45도 기울이기 */
+    z-index: -1; /* 캔버스 뒤로 보내기 */
+    pointer-events: none;
+}
+
+/* 4. 캔버스를 감싸는 main (중복 제거 및 정돈) */
+main {
+    position: relative;
+    z-index: 10; /* 패턴보다 위로 오게 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* 5. 캔버스 자체 설정 */
 canvas {
-  display: block;
+    display: block;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8); /* 배경 패턴이랑 분리되게 그림자 */
+    max-width: 100%; /* 화면보다 크면 자동으로 줄어들게 (반응형 대비) */
+    max-height: 100%;
 }

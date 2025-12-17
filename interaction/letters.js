@@ -88,103 +88,84 @@ function getRandomPosExcludingCenter(excludeW, excludeH) {
 
 class DraggableLetter {
   constructor(char, startX, startY, targetX, targetY) {
-    this.char = char; // 보여줄 글자 (L, O, V, 3)
-
-    // 현재 위치 (덤벨의 위치)
+    this.char = char;
     this.pos = createVector(startX, startY);
-
-    // 목표 위치 (거치대 위치)
     this.target = createVector(targetX, targetY);
 
-    this.isDragging = false; // 지금 잡고 있나?
-    this.isLocked = false; // 자리에 꽂혔나?
+    this.isDragging = false;
+    this.isLocked = false;
+    this.hitSize = 40;
 
-    this.dragOffset = createVector(0, 0); // 마우스 잡은 위치 보정
-    this.hitSize = 40; // 클릭 판정 범위 (반지름)
+    // ★ [핵심] 생성될 때 딱 한 번만 색상을 정함 (번쩍임 방지)
+    // R은 150~255 사이, G/B는 아주 낮게 해서 다양한 레드 톤 생성
+    this.myColor = color(random(150, 255), random(0, 30), random(0, 30));
+    
+    // 드래그 중일 때 쓸 더 밝은 레드
+    this.brightColor = color(255, 150, 150);
   }
 
   update() {
-    // 이미 자리에 꽂혔으면(Lock) 더 이상 움직이지 않음 (휴식!)
     if (this.isLocked) return;
-
-    // 드래그 중이면 마우스 따라다님
     if (this.isDragging) {
-      this.pos.x = mouseX + this.dragOffset.x;
-      this.pos.y = mouseY + this.dragOffset.y;
+      this.pos.x = mouseX; 
+      this.pos.y = mouseY;
     }
   }
 
   display() {
     push();
-
-    // 글자를 넣어야하는 빈자리
-    if (this.target.x > 0 && !this.isLocked) {
-      textFont(titletext);
-      textAlign(CENTER, CENTER);
-      textSize(64);
-      noStroke();
-
-      // ★ 형님이 원하던 "연한 검정색" (Dark Gray)
-      // 0(완전검정) ~ 255(흰색) 사이. 60~80 정도면 적당히 어두워 보임
-      fill(80);
-
-      // 타겟 위치에 미리 글자를 박아둠 (가이드)
-      text(this.char, this.target.x, this.target.y);
-    }
-
-    // 2. 글자 그리기
     textAlign(CENTER, CENTER);
     textFont(titletext);
     textSize(64);
     noStroke();
 
-    // 상태에 따른 색상 변화 (펌핑감!)
+    // 1. [가이드] 정답 자리 (연한 검정/회색)
+    if (this.target.x > 0 && !this.isLocked) {
+      stroke(200,50);
+      strokeWeight(5);
+      fill(30, 30, 30, 180); 
+      text(this.char, this.target.x, this.target.y);
+    }
+
+    // 2. [본체 글자] 색상 로직
     if (this.isLocked) {
-      fill(0, 255, 0); // 꽂힘: 초록
+      fill(255, 0, 0); // 성공하면 초록색 (혹은 형님이 원하는 색)
+      drawingContext.shadowBlur = 15;
+      drawingContext.shadowColor = 'red';
     } else if (this.isDragging) {
-      fill(255, 50, 50); // 드래그 중: 빨강 (힘쓰는 중)
+      fill(this.brightColor); // 잡고 있을 땐 밝은 레드
+      
+      // 잡고 있을 때만 살짝 네온 광택
+      drawingContext.shadowBlur = 15;
+      drawingContext.shadowColor = 'red';
     } else {
-      fill(255); // 기본: 흰색
+      strokeWeight(5);
+      stroke(231,140,159,50);
+      fill(this.myColor); // 안 잡을 땐 아까 정해진 고유 레드 (안 번쩍거림!)
     }
 
     text(this.char, this.pos.x, this.pos.y);
-
     pop();
   }
 
-  // 마우스 눌렀을 때 (그립 잡기)
   pressed() {
-    if (this.isLocked) return false; // 이미 꽂힌 건 못 건드림
-
-    // 마우스와 글자 사이 거리 체크
+    if (this.isLocked) return false;
     let d = dist(mouseX, mouseY, this.pos.x, this.pos.y);
-
     if (d < this.hitSize) {
-      if (this.isSealed) {
-        this.hp--;
-        if (this.hp <= 0) this.isSealed = false;
-        return true; // ★ 봉인 때리는 것도 "잡은 것"으로 처리해서 뒤에 놈 클릭 방지!
-      }
       this.isDragging = true;
       return true;
     }
     return false;
   }
 
-  // 마우스 놓았을 때 (내려놓기)
   released() {
-    if (!this.isDragging) return; // 내가 잡고 있던 게 아니면 무시
-
+    if (!this.isDragging) return;
     this.isDragging = false;
-
-    // 타겟 근처에 놓았는지 확인 (스냅 거리: 50px 이내)
+    
     let d = dist(this.pos.x, this.pos.y, this.target.x, this.target.y);
-
     if (d < 50) {
       this.isLocked = true;
-      this.pos = this.target.copy(); // 자석처럼 딱! 붙여버림
-      console.log(`✅ ${this.char} 안착 성공!`);
-      // 여기에 찰칵 소리나 효과음 넣어도 좋음
+      this.pos = this.target.copy();
     }
   }
 }

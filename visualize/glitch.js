@@ -62,7 +62,6 @@ class GlitchVisual {
 
   // 글리치 발동 로직
   triggerGlitch() {
-    // ★ [핵심] 랜덤 뽑기 통에 TYPE_VIDEO 추가!
     let availableTypes = [
       this.TYPE_RECT,
       this.TYPE_IMAGE,
@@ -179,12 +178,8 @@ class GlitchVisual {
           tint(255, contrastAlpha);
           image(snippet, cx, cy, cw, ch);
           if (typeof glitchVignetteImg !== "undefined") {
-            blendMode(MULTIPLY); // 곱하기 모드 (어둡게 만듦)
-
-            // 비네팅도 글리치 투명도에 맞춰서 같이 사라져야 함
+            blendMode(MULTIPLY);
             tint(255, this.alpha);
-
-            // 마스크 이미지를 현재 글리치 박스 크기(cw, ch)에 맞춰서 늘려 그림!
             image(glitchVignetteImg, cx, cy, cw, ch);
           }
           blendMode(BLEND);
@@ -215,9 +210,6 @@ class GlitchVisual {
   }
 }
 
-// ==================================================
-// 레이아웃 설정 (setup()에서 호출)
-// ==================================================
 function setupGlitchesLayout() {
   // glitches 배열은 전역에 선언되어 있어야 함 (let glitches = [])
 

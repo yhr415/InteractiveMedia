@@ -5,8 +5,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(1100, 900);
-
+  createCanvas(1100,900);
   //웹캠 세팅, 글자 세팅, photobutton setting
   setupCamera();
   setupLetters();
@@ -47,7 +46,10 @@ function draw() {
       break;
     case "PLAYING":
       drawMainVisualizer(); // 4단계: 본게임
+      checkGameClear();
       break;
+    case "END":
+      drawEndScreen();
   }
 }
 
@@ -80,6 +82,11 @@ function mousePressed() {
   }
   if (gameState === "PLAYING" && playbackBar) {
     playbackBar.clicked();
+  }
+  if (gameState === "END") {
+    if (dist(mouseX, mouseY, width / 2, height / 2 + 150) < 100) {
+      resetGame();
+    }
   }
 }
 

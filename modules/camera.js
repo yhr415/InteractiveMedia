@@ -86,7 +86,7 @@ function takeSnapshotBtnClicked() {
 function drawPuzzleStage() {
   // 1. 액자 그리기 (사진 테두리)
   rectMode(CENTER);
-  fill(100, 50, 0); // 갈색 프레임
+  fill(255, 255, 255); // 갈색 프레임
   noStroke();
   rect(width / 2, height / 2, width * 0.7 + 40, height * 0.7 + 40); // 사진보다 조금 크게
 
@@ -130,7 +130,7 @@ function drawTransitionStage() {
 
   // (1) 액자랑 사진 그리기 (PuzzleStage에서 썼던 코드 재사용)
   rectMode(CENTER);
-  fill(100, 50, 0); // 갈색 프레임
+  fill(255,255,255); // 갈색 프레임
   noStroke();
   rect(width / 2, height / 2, width * 0.7 + 40, height * 0.7 + 40);
 
