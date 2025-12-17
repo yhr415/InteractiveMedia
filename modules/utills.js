@@ -6,14 +6,14 @@
 async function loadSingleMidiAndSplitTracks(fileName) {
   try {
     console.log("[시작] MIDI 파일 로딩 중... " + fileName);
-    
+
     // 1. @tonejs/midi 라이브러리를 사용해 웹에서 MIDI 로드
     const midi = await Midi.fromUrl(fileName);
-    
+
     console.log("[체크] 원본 미디 트랙 수: " + midi.tracks.length);
 
     let validTrackCount = 0;
-    
+
     // 2. 트랙 순회 및 필터링
     // 자바스크립트 forEach 대신 for loop 사용 (인덱스 필요)
     for (let i = 0; i < midi.tracks.length; i++) {
@@ -25,33 +25,32 @@ async function loadSingleMidiAndSplitTracks(fileName) {
       let trackName = "Track " + i;
       // 랜덤 색상 생성
       let c = color(random(100, 255), random(100, 255), random(200, 255));
-      
+
       // SynthTrack 생성 (형님이 정의한 클래스)
       // JS에서는 msPerTick 계산을 라이브러리가 알아서 초(Seconds) 단위로 줍니다.
       // 여기서는 일단 객체만 만듭니다.
-      let newTrack = new SynthTrack(trackName, c, 0); 
+      let newTrack = new SynthTrack(trackName, c, 1.0);
 
       // 3. 노트 데이터 채우기 (fillNoteEvents 대체)
       // @tonejs/midi는 이미 notes 배열에 깔끔하게 정리되어 있어서 fillNoteEvents 함수가 따로 필요 없습니다.
-      
-      tr.notes.forEach(note => {
-        // note.time: 시작 시간(초), note.duration: 길이(초), note.velocity: 세기(0~1)
-        // 형님의 Event 클래스에 맞게 변환 (여기서는 단위를 ms로 변환해서 넣는다고 가정)
-        let tick = note.ticks; // 혹은 note.time * 1000
+
+      tr.notes.forEach((note) => {
+        // ★★★ [중요 수정 2] note.time(초)을 가져와서 1000을 곱해 밀리초(ms)로 변환
+        let startMs = note.time * 1000;
+        let durationMs = note.duration * 1000;
         let pitch = note.midi;
-        let vel = note.velocity * 127; // 0~1 범위를 0~127로 변환
-        
-        // Note On
-        newTrack.events.push(new Event(tick, true, pitch, vel));
-        // Note Off (duration 후)
-        newTrack.events.push(new Event(tick + note.durationTicks, false, pitch, 0));
+        let vel = note.velocity * 127;
+
+        // 이제 'tick' 변수에는 '밀리초' 시간이 들어갑니다.
+        newTrack.events.push(new Event(startMs, true, pitch, vel));
+        newTrack.events.push(new Event(startMs + durationMs, false, pitch, 0));
       });
 
       // ★★★ [중요] 2차 필터: "커팅" ★★★
       // 노트 개수가 10개 미만이면 "잡동사니" 취급
       if (newTrack.events.length < 10) {
         // console.log("탈락: " + trackName + " (노트 수 부족)");
-        continue; 
+        continue;
       }
 
       // 합격한 트랙 등록
@@ -63,8 +62,9 @@ async function loadSingleMidiAndSplitTracks(fileName) {
     }
 
     console.log("------------------------------------------------");
-    console.log(`[결과] 컷팅 완료! 총 ${validTrackCount}개의 알짜배기 트랙만 남음.`);
-
+    console.log(
+      `[결과] 컷팅 완료! 총 ${validTrackCount}개의 알짜배기 트랙만 남음.`
+    );
   } catch (e) {
     console.error("MIDI 로딩 실패:", e);
   }
@@ -103,13 +103,13 @@ function drawBlurryNeon(x, y, w, h, c, power) {
   for (let i = 0; i < layers; i++) {
     // i가 커질수록 두꺼워짐
     let weight = map(i, 0, layers, 2, maxStroke);
-    
+
     // 바깥쪽은 희미하게
     let alphaVal = map(i, 0, layers, 50, 0);
 
     stroke(r, g, b, alphaVal * power);
     strokeWeight(weight);
-    
+
     // drawHeartShape 함수가 정의되어 있어야 함
     drawHeartShape(x, y, w, h);
   }
@@ -119,7 +119,7 @@ function drawBlurryNeon(x, y, w, h, c, power) {
   let coreColor = lerpColor(c, color(255), 0.5);
   stroke(red(coreColor), green(coreColor), blue(coreColor), 200 * power);
   strokeWeight(2);
-  
+
   drawHeartShape(x, y, w, h);
 
   blendMode(BLEND); // 복구
@@ -130,10 +130,10 @@ function drawBlurryNeon(x, y, w, h, c, power) {
 // ==================================================
 function drawGlowingOrb(x, y, size, c, power) {
   noStroke();
-  blendMode(ADD); 
+  blendMode(ADD);
 
   let layers = 20;
-  
+
   // 색상 분리
   let r = red(c);
   let g = green(c);
@@ -157,17 +157,17 @@ function drawGlowingOrb(x, y, size, c, power) {
     // p5.js fill에 color 객체와 alpha를 같이 넣으려면 setAlpha를 쓰거나,
     // red(), green(), blue()로 쪼개서 넣어야 함. 가장 안전한 방법:
     fill(red(drawColor), green(drawColor), blue(drawColor), alphaVal);
-    
+
     circle(x, y, radius);
   }
 
-  blendMode(BLEND); 
+  blendMode(BLEND);
 }
 
 class TriggerManager {
   constructor() {
     // Java의 HashMap<String, Float> 대신 그냥 빈 객체 사용
-    this.signals = {}; 
+    this.signals = {};
   }
 
   // 1. 매 프레임 시작할 때 초기화 (리셋)
@@ -204,7 +204,7 @@ class TriggerManager {
 class Event {
   constructor(tick, on, pitch, vel) {
     this.tick = tick;
-    this.on = on;     // true: Note On, false: Note Off
+    this.on = on; // true: Note On, false: Note Off
     this.pitch = pitch;
     this.vel = vel;
   }
@@ -227,13 +227,13 @@ class SynthTrack {
 
     // === [중요] 매핑을 위한 상태 변수들 ===
     this.isNoteStart = false; // Trigger: 이번 프레임에 시작됐나?
-    this.isNoteSus = false;   // Sustain: 지금 소리가 나고 있나?
+    this.isNoteSus = false; // Sustain: 지금 소리가 나고 있나?
 
-    this.outputTag = null;    // 내가 쏘아 올릴 신호 이름
+    this.outputTag = null; // 내가 쏘아 올릴 신호 이름
     this.visible = true;
-    
+
     // ★★★ 시각적 강도 (0.0 ~ 1.0)
-    this.power = 0; 
+    this.power = 0;
   }
 
   reset() {
@@ -263,14 +263,14 @@ class SynthTrack {
     this.power *= 0.9;
 
     // 신호 보내기 (TriggerManager가 전역변수 triggers로 있다고 가정)
-    if (this.outputTag !== null && typeof triggers !== 'undefined') {
+    if (this.outputTag !== null && typeof triggers !== "undefined") {
       triggers.send(this.outputTag, this.power);
     }
 
     // 이벤트 루프
     while (this.cursor < this.events.length) {
       let e = this.events[this.cursor];
-      
+
       // 시간 계산 (반올림)
       let eventTimeMs = Math.round(e.tick * this.msPerTick);
 
@@ -282,7 +282,7 @@ class SynthTrack {
           if (!this.activePitches.includes(e.pitch)) {
             this.activePitches.push(e.pitch);
             this.isNoteStart = true; // ★ 시작 신호 발사!
-            this.power = 1.0;        // ★ 노트 시작될 때 파워 풀충전!
+            this.power = 1.0; // ★ 노트 시작될 때 파워 풀충전!
           }
         } else {
           // Note Off: 리스트에서 제거
