@@ -223,8 +223,8 @@ class NeonHeartBurst {
     this.isGrowing = true;
 
     // 3. 색상 (연한 핑크 -> 딥 핑크)
-    this.lightPink = color(255, 200, 230); 
-    this.deepPink = color(255, 20, 147);   
+    this.lightPink = color(255, 0, 0); 
+    this.deepPink = color(100, 0, 0);   
   }
 
   update() {

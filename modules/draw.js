@@ -62,6 +62,40 @@ function drawMainVisualizer() {
 
   // 나머지 비주얼 객체 루프
   for (let h of hearts) h.display();
+  //textcloud
+  let textTrigger = triggers.get("TEXT_CLOUD");
+  // 쿨타임 적용 (너무 자주 생기면 지저분함. 100ms 정도 추천)
+  if (textTrigger > 0.2 && currentTime - lastTextCloudTime > 100) {
+    // ==========================================================
+    // ★ [신규] 이번에 집중적으로 글리치 낼 위치(Target) 선정
+    // ==========================================================
+    // 1. 왼쪽 심방을 팰지, 오른쪽 심방을 팰지 결정 (랜덤)
+    let focusSide = random(1) < 0.5;
+
+    // 2. 위(0.0) ~ 아래(1.0) 중 어디를 팰지 결정 (랜덤)
+    let focusT = random(1);
+
+    let count = floor(random(3, 8));
+
+    for (let i = 0; i < count; i++) {
+      // ★ 생성자에게 "집중 타겟(focusSide, focusT)" 정보를 같이 넘겨줌!
+      floatingTexts.push(
+        new FloatingText(200*1.7, 200, focusSide, focusT)
+      );
+    }
+
+    lastTextCloudTime = currentTime;
+  }
+
+  // 2. 업데이트 및 그리기 루프
+  // 하트보다 뒤에 그리고 싶으면 drawMainHeart 위, 앞에 그리고 싶으면 아래에 배치
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    let ft = floatingTexts[i];
+    ft.update();
+    ft.display();
+    if (ft.isDead()) floatingTexts.splice(i, 1);
+  }
+
   for (let o of orbs) o.display();
   for (let a of arcs) a.display();
   for (let d of diamonds) d.display();

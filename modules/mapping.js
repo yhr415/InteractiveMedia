@@ -23,7 +23,6 @@ function manualMapping() {
   // kickpeak는 글리치효과에 해당!
 
   setTrackConfig(5, "MAIN_IN_DRAW", false);
-
   setTrackConfig(4, "HEART_PATTERN", false);
 
   setTrackConfig(16, "DIAMOND_HIT", false);
@@ -31,11 +30,10 @@ function manualMapping() {
   setTrackConfig(21, "BASS_POWER", false);
 
   setTrackConfig(23,"HEART_BURST",false);
-  // t21이 808 (Bass)
 
-  // [그룹 2] 주석 처리된 예시들은 그대로 둠
-  // setTrackConfig(2, "MAIN_SCALE", false);
-  // setTrackConfig(4, "SUB_SCALE", true); 
+  setTrackConfig(10,"TEXT_CLOUD",false);
+  setTrackConfig(11,"TEXT_CLOUD",false);
+  setTrackConfig(12,"TEXT_CLOUD",false);
 
   console.log("=== [수동 매핑 완료] ===");
 }

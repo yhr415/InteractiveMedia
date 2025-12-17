@@ -27,6 +27,9 @@ let lastSubHeartTime = 0;
 let neonBursts = [];
 let lastBurstTime = 0;
 let noiseField;
+let floatingTexts = [];
+let lastTextCloudTime = 0;
+
 
 // 카메라 관련 변수
 let cam; 
