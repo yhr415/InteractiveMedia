@@ -11,7 +11,8 @@ function manualMapping() {
 
   // [그룹 1] 신스 1번 그룹 -> 메인 하트를 "그리기(DRAW)"만 함
   setTrackConfig(0, "MAIN_DRAW", false); // 0번트랙: 가장 메인신스 (Saw 느낌)
-  
+  setTrackConfig(9, "MAIN_DRAW", false);
+
   setTrackConfig(2, "SUB_DRAW", false);
 
   // 킥/베이스 (글리치 효과)
@@ -28,6 +29,8 @@ function manualMapping() {
   setTrackConfig(16, "DIAMOND_HIT", false);
 
   setTrackConfig(21, "BASS_POWER", false);
+
+  setTrackConfig(23,"HEART_BURST",false);
   // t21이 808 (Bass)
 
   // [그룹 2] 주석 처리된 예시들은 그대로 둠

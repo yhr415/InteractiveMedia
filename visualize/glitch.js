@@ -1,67 +1,58 @@
-// ==================================================
-// GlitchVisual 클래스
-// ==================================================
 class GlitchVisual {
   constructor(x, y, size, tag, c) {
     this.x = x;
     this.y = y;
     this.baseSize = size;
     this.glitchTag = tag;
-    this.myColor = c; // p5.color 객체
+    this.myColor = c;
 
     this.lastGlitchPower = 0;
 
-    // 콘텐츠 관련 변수
     this.activeIndex = -1;
     this.alpha = 0;
 
-    // 상수 정의 (this.TYPE_... 형태로 사용)
+    // 상수 정의
     this.TYPE_RECT = 0;
     this.TYPE_IMAGE = 1;
-    this.TYPE_VIDEO = 2;
+    this.TYPE_VIDEO = 2; // ★ 비디오 모드
     this.TYPE_CUSTOM_DRAW = 3;
     this.TYPE_GRID = 4;
-    
-    this.contentType = this.TYPE_RECT;
-    this.displayImage = null;   // p5.Image
-    this.customCanvas = null;   // p5.Graphics
 
-    // ★ [NEW] 랜덤 격자 속성 변수
+    this.contentType = this.TYPE_RECT;
+    this.displayImage = null;
+    this.customCanvas = null;
+
+    // 그리드 변수
     this.gridXOffset = 0;
     this.gridYOffset = 0;
     this.gridSpacing = 85.0;
 
-    // 프리셋 배열 (2차원 배열)
+    // ★ 비디오 글리치용 랜덤 변수 (신호가 튀는 느낌)
+    this.videoOffsetX = 0;
+    this.videoOffsetY = 0;
+
+    // 프리셋 배열 (기존과 동일)
     this.rectPresets = [
-      // 1-4. 좌우 수직 벽
-      [-550, 0, 10, 900], 
-      [550, 0, 10, 900], 
-      [-400, 0, 300, 600], 
-      [400, 0, 300, 600], 
-
-      // 5-8. 상하 수평 벽
-      [0, -450, 1100, 10], 
-      [0, 450, 1100, 10], 
-      [0, -300, 800, 300], 
-      [0, 300, 800, 300], 
-
-      // 9-12. 모서리
-      [-275, -225, 550, 450], 
-      [275, -225, 550, 450], 
-      [-275, 225, 550, 450], 
-      [275, 225, 550, 450], 
-
-      // 13-16. 오버레이
-      [0, 0, 1200, 100], 
-      [0, 0, 100, 1000], 
-      [0, 0, 1100, 900], 
-      [0, 0, 1200, 1000], 
-
-      // 17-20. 비대칭 오프셋
-      [-450, 100, 200, 700], 
-      [450, -100, 200, 700], 
-      [-300, -300, 500, 500], 
-      [300, 300, 500, 500]     
+      [-550, 0, 10, 900],
+      [550, 0, 10, 900],
+      [-400, 0, 300, 600],
+      [400, 0, 300, 600],
+      [0, -450, 1100, 10],
+      [0, 450, 1100, 10],
+      [0, -300, 800, 300],
+      [0, 300, 800, 300],
+      [-275, -225, 550, 450],
+      [275, -225, 550, 450],
+      [-275, 225, 550, 450],
+      [275, 225, 550, 450],
+      [0, 0, 1200, 100],
+      [0, 0, 100, 1000],
+      [0, 0, 1100, 900],
+      [0, 0, 1200, 1000],
+      [-450, 100, 200, 700],
+      [450, -100, 200, 700],
+      [-300, -300, 500, 500],
+      [300, 300, 500, 500],
     ];
   }
 
@@ -71,42 +62,52 @@ class GlitchVisual {
 
   // 글리치 발동 로직
   triggerGlitch() {
-    let availableTypes = [this.TYPE_RECT, this.TYPE_IMAGE, this.TYPE_GRID];
-    // random()은 실수를 반환하므로 floor()로 정수 변환
-    this.contentType = availableTypes[floor(random(availableTypes.length))];
+    // ★ [핵심] 랜덤 뽑기 통에 TYPE_VIDEO 추가!
+    let availableTypes = [
+      this.TYPE_RECT,
+      this.TYPE_IMAGE,
+      this.TYPE_GRID,
+      this.TYPE_VIDEO,
+    ];
 
+    this.contentType = availableTypes[floor(random(availableTypes.length))];
     this.activeIndex = floor(random(this.rectPresets.length));
     this.alpha = 255;
 
-    // ★ [핵심] 격자 속성 랜덤화
+    // 속성 랜덤화 (격자)
     if (this.contentType === this.TYPE_GRID) {
       this.gridSpacing = random(60, 100);
       this.gridXOffset = random(-200, 200);
       this.gridYOffset = random(-200, 200);
     }
+
+    // ★ [NEW] 비디오도 그냥 나오면 재미없으니 살짝 비틀어서(Offset) 보여줌
+    if (this.contentType === this.TYPE_VIDEO) {
+      this.videoOffsetX = random(-50, 50);
+      this.videoOffsetY = random(-50, 50);
+    }
   }
 
   display() {
-    // triggers가 존재하는지 확인
-    let gPower = (this.glitchTag && typeof triggers !== 'undefined') ? triggers.get(this.glitchTag) : 0;
+    // triggers가 없으면 안전하게 0
+    let gPower =
+      this.glitchTag && typeof triggers !== "undefined"
+        ? triggers.get(this.glitchTag)
+        : 0;
 
-    // 1. 피크 감지
     if (gPower - this.lastGlitchPower > 0.1) {
       this.triggerGlitch();
     }
     this.lastGlitchPower = gPower;
 
-    // 2. 글리치 그리기
     if (this.alpha <= 1) return;
 
-    push(); // pushMatrix() + pushStyle()
+    push();
     translate(this.x, this.y);
 
-    // 광속 소멸
-    this.alpha -= 20;
+    this.alpha -= 20; // 광속 소멸
 
     let sizeFactor = 1.0;
-
     let p = this.rectPresets[this.activeIndex];
     let rx = p[0];
     let ry = p[1];
@@ -115,11 +116,11 @@ class GlitchVisual {
 
     this.drawContent(rx, ry, rw, rh);
 
-    pop(); // popMatrix() + popStyle()
+    pop();
   }
 
   drawContent(cx, cy, cw, ch) {
-    // 1. 기본 배경 프레임 (그리드 제외)
+    // 1. 기본 프레임 (그리드일 땐 제외)
     if (this.contentType !== this.TYPE_GRID) {
       rectMode(CENTER);
       noFill();
@@ -128,128 +129,87 @@ class GlitchVisual {
       rect(cx, cy, cw, ch);
     }
 
-    // 2. 타입별 내부 콘텐츠 채우기
+    // 2. 콘텐츠 채우기
     switch (this.contentType) {
       case this.TYPE_RECT:
-        // 사각형 모드
-        let flickerFactor = 1.0;
-
-        // 확률적 로직
-        if (random(1) < 0.3) break; // 사라짐
-        if (random(1) < 0.1) flickerFactor = 1.8; // 강한 번쩍임
-
-        flickerFactor += random(-0.4, 0.4);
-        flickerFactor = constrain(flickerFactor, 0.1, 1.8);
-
-        let currentAlpha = constrain(this.alpha * flickerFactor, 0, 255);
-
-        fill(255, currentAlpha); // p5.js에선 fill에 알파값 바로 넣기 가능
+        let flicker = random(0.6, 1.4);
+        fill(255, constrain(this.alpha * flicker, 0, 255));
         noStroke();
         rect(cx, cy, cw, ch);
         break;
 
       case this.TYPE_IMAGE:
-        // 이미지 모드
         if (this.displayImage) {
-          // p5.js의 tint(gray, alpha)
           tint(255, this.alpha);
           imageMode(CENTER);
           image(this.displayImage, cx, cy, cw, ch);
           noTint();
         } else {
-          fill(255, this.alpha * 0.1);
+          fill(255, this.alpha * 0.5);
           rect(cx, cy, cw, ch);
         }
         break;
 
-      /* case this.TYPE_VIDEO:
-        // ★★★ [p5.js용 카메라 로직] ★★★
-        // cam이 전역 변수로 있고, 로드되었다고 가정
-        if (typeof cam !== 'undefined' && cam.loadedmetadata) { // p5.js 비디오 로드 확인 속성
-          push();
-          translate(cx, cy);
+      // ===============================================
+      // ★★★ [TYPE_VIDEO 구현] 웹캠 영상 띄우기 ★★★
+      // ===============================================
+      case this.TYPE_VIDEO:
+        // camBuffer가 준비됐는지 확인
+        if (typeof camBuffer !== "undefined") {
+          let absoluteLeft = this.x + cx - cw / 2;
+          let absoluteTop = this.y + cy - ch / 2;
 
-          let targetW = cw;
-          let targetH = ch;
+          let sourceX = absoluteLeft + this.videoOffsetX;
+          let sourceY = absoluteTop + this.videoOffsetY;
 
-          // 비디오 중앙 크롭 계산
-          let camCropX = cam.width / 2 - targetW / 2;
-          let camCropY = cam.height / 2 - targetH / 2;
-          
-          camCropX = constrain(camCropX, 0, cam.width - targetW);
-          camCropY = constrain(camCropY, 0, cam.height - targetH);
+          let sx = constrain(sourceX, 0, camBuffer.width - cw);
+          let sy = constrain(sourceY, 0, camBuffer.height - ch);
 
-          // p5.js의 get() 혹은 copy() 사용. copy()가 성능상 더 좋음
-          // copy(srcImage, sx, sy, sw, sh, dx, dy, dw, dh)
-          // 여기서는 그냥 이미지를 get()해서 그리는 방식 (직관적)
-          
-          let croppedCam = cam.get(camCropX, camCropY, targetW, targetH);
-          
-          let drawX = -cw / 2;
-          let drawY = -ch / 2;
+          // 이미지 조각 떠오기 (Crop)
+          let snippet = camBuffer.get(sx, sy, cw, ch);
+          snippet.filter(GRAY);
 
+          // 3. 그리기 (Destination)
+          // 이제 translate와 tint가 정상적으로 먹힘!
           tint(255, this.alpha);
-          imageMode(CORNER);
-          image(croppedCam, drawX, drawY, targetW, targetH);
-          noTint();
-          pop();
-        } else {
-          fill(0, 200, 255, this.alpha); // p5.js color syntax
-          rect(cx, cy, cw, ch);
-        }
-        break; 
-      */
+          imageMode(CENTER); // 글리치 박스 중심에 그림
+          image(snippet, cx, cy, cw, ch);
+          blendMode(HARD_LIGHT);
+          let contrastAlpha = constrain(this.alpha, 0, 255);
+          tint(255, contrastAlpha);
+          image(snippet, cx, cy, cw, ch);
+          if (typeof glitchVignetteImg !== "undefined") {
+            blendMode(MULTIPLY); // 곱하기 모드 (어둡게 만듦)
 
-      case this.TYPE_CUSTOM_DRAW:
-        if (this.customCanvas) {
-          tint(255, this.alpha);
-          imageMode(CENTER);
-          image(this.customCanvas, cx, cy, cw, ch);
-          noTint();
-        } else {
-          // 색상 분해 후 적용
-          let r = red(this.myColor);
-          let g = green(this.myColor);
-          let b = blue(this.myColor);
-          stroke(r, g, b, this.alpha);
-          
-          strokeWeight(1);
-          for (let i = -2; i <= 2; i++) {
-            line(cx - cw / 2, cy + ch / 4 * i, cx + cw / 2, cy + ch / 4 * i);
+            // 비네팅도 글리치 투명도에 맞춰서 같이 사라져야 함
+            tint(255, this.alpha);
+
+            // 마스크 이미지를 현재 글리치 박스 크기(cw, ch)에 맞춰서 늘려 그림!
+            image(glitchVignetteImg, cx, cy, cw, ch);
           }
-          noStroke();
+          blendMode(BLEND);
+          noTint();
+        } else {
+          fill(255, 0, 0, this.alpha);
+          rect(cx, cy, cw, ch);
         }
         break;
 
       case this.TYPE_GRID:
-        // 그리드 모드
         let gridAlpha = map(this.alpha, 0, 255, 0, 255);
-        let HORIZONTAL_LINES = 8;
-        let VERTICAL_LINES = 10;
-
-        push(); // pushStyle() 대체
+        push();
         stroke(255, gridAlpha);
-        strokeWeight(1);
+        strokeWeight(2); // 선 좀 더 두껍게
         noFill();
-
-        // 1. 랜덤 위치 이동
         translate(this.gridXOffset, this.gridYOffset);
 
-        // 2. 간격 적용
+        // 그리드 간격
         let SPACING = this.gridSpacing;
-        let halfWidth = (VERTICAL_LINES - 1) * SPACING / 2.0;
-        let halfHeight = (HORIZONTAL_LINES - 1) * SPACING / 2.0;
-
-        for (let i = 1; i < HORIZONTAL_LINES - 1; i++) {
-          let y = -halfHeight + i * SPACING;
-          line(-halfWidth, y, halfWidth, y);
+        for (let i = -5; i <= 5; i++) {
+          line(-2000, i * SPACING, 2000, i * SPACING); // 가로선
+          line(i * SPACING, -2000, i * SPACING, 2000); // 세로선
         }
-        for (let i = 1; i < VERTICAL_LINES - 1; i++) {
-          let x = -halfWidth + i * SPACING;
-          line(x, -halfHeight, x, halfHeight);
-        }
-
-        pop(); // popStyle() 대체
+        pop();
         break;
     }
   }
@@ -260,15 +220,10 @@ class GlitchVisual {
 // ==================================================
 function setupGlitchesLayout() {
   // glitches 배열은 전역에 선언되어 있어야 함 (let glitches = [])
-  
+
   // glitches = []; // 초기화 (필요시)
 
   // 1. [중앙] 메인 하트 위치
-  let centerGlitch = new GlitchVisual(
-    0, 0, 
-    200, 
-    "KICK_PEAK", 
-    color(255, 0, 0)
-  );
+  let centerGlitch = new GlitchVisual(0, 0, 200, "KICK_PEAK", color(255, 0, 0));
   glitches.push(centerGlitch);
 }

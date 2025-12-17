@@ -45,18 +45,14 @@ class SubHeartVisual {
     let b = blue(this.myColor);
 
     noFill();
-    
-    // 1. 기본 네온 테두리
-    stroke(r, g, b, this.currentAlpha);
-    strokeWeight(2);
-    
-    // drawHeartShape 함수는 이전에 변환한 코드를 사용합니다.
-    drawHeartShape(0, 0, w, h);
 
-    // 2. 하이라이트 효과 (네온 블러 느낌) - 투명도를 낮춰서 덧그리기
-    stroke(r, g, b, this.currentAlpha / 2);
-    strokeWeight(5);
-    drawHeartShape(0, 0, w, h);
+    let c = color(r, g, b);
+
+    let power = map(this.currentAlpha, 0, 255, 0, 1);
+
+    // 3. 네온 함수 호출! (깔끔하게 위임)
+    // (x, y, 너비, 높이, 색상, 강도)
+    drawBlurryNeon(0, 0, w, h, c, power);
 
     pop(); // popMatrix() -> pop()
   }
@@ -70,8 +66,8 @@ function setupSubHeartsLayout() {
 
   // 8개의 좌표 리스트 (배열)
   let gridX = [-2, -1, -1, 0, 0, 1, 1, 2];
-  let gridY = [ 0,  1, -1, 2, -2, 1, -1, 0];
-  
+  let gridY = [0, 1, -1, 2, -2, 1, -1, 0];
+
   // 기존 subHearts 리스트 초기화
   // (subHearts 변수는 전역에 let subHearts = [] 로 선언되어 있어야 합니다)
   subHearts = [];
@@ -82,12 +78,14 @@ function setupSubHeartsLayout() {
 
     // 서브 하트 생성 (번호는 3번부터 시작)
     // ArrayList.add() -> Array.push()
-    subHearts.push(new SubHeartVisual(
-      px, 
-      py, 
-      120, // size
-      i + 3, // idNumber
-      color(200, 20, 20) // p5.js color 함수
-    ));
+    subHearts.push(
+      new SubHeartVisual(
+        px,
+        py,
+        120, // size
+        i + 3, // idNumber
+        color(200, 20, 20) // p5.js color 함수
+      )
+    );
   }
 }

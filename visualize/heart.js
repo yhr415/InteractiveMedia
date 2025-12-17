@@ -208,3 +208,77 @@ function setupHeartsLayout() {
   let mainHeart2 = new HeartVisual(0, 0, 200, true, 1, "HEART3_SCALE", "HEART3_DRAW", color(155, 94, 127));
   hearts.push(mainHeart2);
 }
+
+//네온하트 크게 날아가는
+class NeonHeartBurst {
+  constructor() {
+    // 1. 위치 및 크기
+    this.pos=(width/2,height/2);
+    this.size = 10;
+    this.maxSize = max(width, height) * 1.5; // 화면 꽉 채울 정도
+    
+    // 2. 생명 주기
+    this.alpha = 0;
+    this.life = 1.0;
+    this.isGrowing = true;
+
+    // 3. 색상 (연한 핑크 -> 딥 핑크)
+    this.lightPink = color(255, 200, 230); 
+    this.deepPink = color(255, 20, 147);   
+  }
+
+  update() {
+    if (this.isGrowing) {
+      // [펌핑 구간] 빠르게 커짐
+      this.size = lerp(this.size, this.maxSize, 0.15);
+      this.alpha = lerp(this.alpha, 255, 0.2);
+
+      if (this.size > this.maxSize * 0.9) {
+        this.isGrowing = false;
+      }
+    } else {
+      // [쿨다운 구간] 천천히 사라짐
+      this.life -= 0.02; 
+      this.alpha = this.life * 255;
+      this.size += 5; // 날아가는 느낌
+    }
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+
+  display() {
+    if (this.alpha <= 1) return;
+
+    push();
+    translate(this.pos.x, this.pos.y);
+
+    // 1. 현재 색상 계산 (크기에 따라 색 변함)
+    let maturity = map(this.size, 0, this.maxSize * 0.9, 0, 1, true);
+    let currentColor = lerpColor(this.lightPink, this.deepPink, maturity);
+    
+    // ★ 투명도 적용 (이게 중요!)
+    currentColor.setAlpha(this.alpha);
+
+    // 2. 파워 계산 (0.0 ~ 1.0)
+    // alpha가 255일 때 power 1.0
+    let drawPower = map(this.alpha, 0, 255, 0, 1);
+
+    // 3. ★ 형님이 가진 기존 함수 호출! (깔끔!)
+    if (typeof drawBlurryNeon === 'function') {
+      // (x, y, w, h, color, power)
+      drawBlurryNeon(0, 0, this.size*1.7, this.size, currentColor, drawPower/2);
+    } else {
+      // 안전장치 (혹시 함수 없을 때)
+      stroke(currentColor);
+      strokeWeight(3);
+      // drawHeartShape도 전역 함수로 있다고 가정하고 호출
+      if (typeof drawHeartShape === 'function') {
+        drawHeartShape(0, 0, this.size, this.size);
+      }
+    }
+
+    pop();
+  }
+}
