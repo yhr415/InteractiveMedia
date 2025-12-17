@@ -4,3 +4,4 @@ out/
 bin/
 .vite/
 pdecodes/
+.DS_Store
