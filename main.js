@@ -1,6 +1,7 @@
 function preload() {
   soundFormats("mp3", "ogg");
   musicFile = loadSound("data/lov3.mp3");
+  arrowSvg=loadImage("data/arrow-right-solid-full.svg");
 }
 
 function setup() {

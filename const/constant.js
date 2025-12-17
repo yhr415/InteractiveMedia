@@ -29,6 +29,8 @@ let lastBurstTime = 0;
 let noiseField;
 let floatingTexts = [];
 let lastTextCloudTime = 0;
+let pulses = [];
+let lastPulseTime = 0;
 
 
 // 카메라 관련 변수
@@ -47,3 +49,17 @@ let fadeAmount = 0;          // 어두워지는 정도 (0~255) 처음에는 0, �
 
 //재생 컨트롤 바
 let playbackBar;
+
+//줌 관련 constant
+let currentZoom = 1.0; // 현재 화면 크기
+let zoomDecay = 0.92;
+
+//combo constant
+let comboIcons = []; // 화살표 아이콘들을 담을 리스트
+let lastComboTime = 0; // 마지막으로 콤보가 터진 시간
+let comboLimit = 250; // 
+
+//text
+const floattext='RoundedFixedsys';
+const titletext='BinggreIi';
+const fatext='Font Awesome';

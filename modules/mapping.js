@@ -3,13 +3,6 @@ function manualMapping() {
   if (tracks.length === 0) return;
 
   console.log("=== [수동 매핑 시작] ===");
-
-  // ========================================================
-  // ★ 여기서 네가 직접 번호를 적어서 세팅해! (인덱스는 0부터 시작)
-  // 사용법: setTrackConfig(번호, "태그이름", 보일지여부T/F);
-  // ========================================================
-
-  // [그룹 1] 신스 1번 그룹 -> 메인 하트를 "그리기(DRAW)"만 함
   setTrackConfig(0, "MAIN_DRAW", false); // 0번트랙: 가장 메인신스 (Saw 느낌)
   setTrackConfig(9, "MAIN_DRAW", false);
 
@@ -34,6 +27,21 @@ function manualMapping() {
   setTrackConfig(10,"TEXT_CLOUD",false);
   setTrackConfig(11,"TEXT_CLOUD",false);
   setTrackConfig(12,"TEXT_CLOUD",false);
+
+  setTrackConfig(17,"BASS_ZOOM", false);
+  setTrackConfig(20,"BASS_ZOOM", false);
+
+  setTrackConfig(22,"COMBO_BIT",false);
+
+  setTrackConfig(18,"PULSE_TAG",false);
+  
+  setTrackConfig(1,null,false);
+  setTrackConfig(3,null,false);
+  setTrackConfig(13,null,false);
+  setTrackConfig(14,null,false);
+  setTrackConfig(15,null,false);
+  setTrackConfig(19,null,false);
+
 
   console.log("=== [수동 매핑 완료] ===");
 }

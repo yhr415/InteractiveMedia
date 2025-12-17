@@ -57,69 +57,53 @@ class ArcSegment {
   constructor(start, span, c) {
     this.baseAngle = start;
     this.maxSpan = span;
-    this.col = c; // p5 color object
-
+    this.col = c;
     this.headProgress = 0;
     this.tailProgress = 0;
     this.life = 1.0;
-    this.decaySpeed = 0.02;
+    this.decaySpeed = 0.04; // 1. 속도 업
   }
 
   display(x, y, diameter) {
-    // 1. 수명 관리
     this.life -= this.decaySpeed;
     if (this.life <= 0) return;
 
-    // 2. 애니메이션 로직 (Tail Chasing)
-    if (this.life > 0.6) {
-      this.headProgress = lerp(this.headProgress, 1.0, 0.2);
-    } else if (this.life < 0.4) {
-      this.tailProgress = lerp(this.tailProgress, 1.0, 0.1);
+    // 2. 애니메이션 겹침 구간 최적화 (더 빨리 사라지게)
+    this.headProgress = lerp(this.headProgress, 1.0, 0.3);
+    
+    if (this.life < 0.6) { // 더 일찍 꼬리가 출발
+      this.tailProgress = lerp(this.tailProgress, 1.0, 0.25);
     }
 
-    if (this.life <= 0.6) this.headProgress = 1.0;
-
-    // 3. 그리기
     noFill();
     strokeCap(SQUARE);
     blendMode(ADD);
 
-    // 투명도 계산
-    let alphaVal = map(this.life, 0, 0.2, 0, 255);
+    // 3. 투명도 커브를 더 가파르게 (끝에서 흐리멍텅하게 남지 않게)
+    let alphaVal = map(this.life, 0.1, 0.4, 0, 255); 
     alphaVal = constrain(alphaVal, 0, 255);
 
-    // 각도 계산
     let startDraw = this.baseAngle + (this.maxSpan * this.tailProgress);
     let endDraw = this.baseAngle + (this.maxSpan * this.headProgress);
-    let overlap = 0.01;
-
-    // 너무 짧으면 그리지 않음
-    if (endDraw - startDraw < 0.01) return;
-
-    let layers = 4;
     
-    // 색상 분해 (p5.js에서 color 객체 내부 값 접근)
+    if (endDraw - startDraw < 0.001) return; // 너무 작으면 렌더링 스킵
+
     let r = red(this.col);
     let g = green(this.col);
     let b = blue(this.col);
 
+    let layers = 4;
     for (let i = 0; i < layers; i++) {
-      let w = map(i, 0, layers, 3, 25);
+      let w = map(i, 0, layers, 3, 20);
       let a = map(i, 0, layers, alphaVal, 0);
-
-      stroke(r, g, b, a); // RGB + Alpha
+      stroke(r, g, b, a);
       strokeWeight(w);
-      
-      // p5.js arc: x, y, w, h, start, stop
-      arc(x, y, diameter, diameter, startDraw, endDraw + overlap);
+      arc(x, y, diameter, diameter, startDraw, endDraw + 0.01);
     }
-
     blendMode(BLEND);
   }
 
-  isDead() {
-    return this.life <= 0;
-  }
+  isDead() { return this.life <= 0 || (this.tailProgress > 0.95 && this.life < 0.5); }
 }
 
 // ==========================================

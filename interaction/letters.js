@@ -119,6 +119,7 @@ class DraggableLetter {
 
     // 글자를 넣어야하는 빈자리
     if (this.target.x > 0 && !this.isLocked) {
+      textFont(titletext);
       textAlign(CENTER, CENTER);
       textSize(64);
       noStroke();
@@ -133,6 +134,7 @@ class DraggableLetter {
 
     // 2. 글자 그리기
     textAlign(CENTER, CENTER);
+    textFont(titletext);
     textSize(64);
     noStroke();
 

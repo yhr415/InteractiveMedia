@@ -17,11 +17,40 @@ function drawMainVisualizer() {
       lastBurstTime = currentTime;
     }
   }
+  if (currentTime - lastComboTime > comboLimit) {
+    comboIcons = [];
+  }
+
+  if (triggers.get("COMBO_BIT") > 0.8 && currentTime - lastComboTime > 100) {
+    let nextX = comboIcons.length * 100;
+    comboIcons.push({ x: nextX, y: 0 }); // 리스트에 추가
+    lastComboTime = currentTime; // 타이머 갱신
+  }
+
+  let pulseTrigger = triggers.get("PULSE_TAG"); 
+  if (pulseTrigger > 0.6 && currentTime - lastPulseTime > 150) {
+    pulses.push(new NeonPulse());
+    lastPulseTime = currentTime;
+  }
 
   background(0);
 
   push(); // pushMatrix() -> push()
   translate(width / 2, height / 2);
+
+  let zoomSignal = triggers.get("BASS_ZOOM");
+
+  if (zoomSignal > 0.7) {
+    currentZoom = 1.1; // 목표 크기까지 순식간에 펌핑!
+  }
+  if (currentZoom > 1.0) {
+    currentZoom = lerp(currentZoom, 1.0, 0.15);
+  } else {
+    currentZoom = 1.0;
+  }
+
+  // 4. 최종 계산된 크기 적용
+  scale(currentZoom);
 
   for (let i = neonBursts.length - 1; i >= 0; i--) {
     let b = neonBursts[i];
@@ -79,9 +108,7 @@ function drawMainVisualizer() {
 
     for (let i = 0; i < count; i++) {
       // ★ 생성자에게 "집중 타겟(focusSide, focusT)" 정보를 같이 넘겨줌!
-      floatingTexts.push(
-        new FloatingText(200*1.7, 200, focusSide, focusT)
-      );
+      floatingTexts.push(new FloatingText(200 * 1.7, 200, focusSide, focusT));
     }
 
     lastTextCloudTime = currentTime;
@@ -99,6 +126,22 @@ function drawMainVisualizer() {
   for (let o of orbs) o.display();
   for (let a of arcs) a.display();
   for (let d of diamonds) d.display();
+  push();
+  translate(-300, 200);
+  for (let icon of comboIcons) {
+    imageMode(CENTER);
+    image(arrowSvg, icon.x, icon.y, 80, 80);
+  }
+  pop();
+
+  for (let i = pulses.length - 1; i >= 0; i--) {
+    pulses[i].update();
+    pulses[i].display();
+    if (pulses[i].isDead()) {
+      pulses.splice(i, 1);
+    }
+  }
+
   for (let g of glitches) g.display();
 
   drawCircleVisibleOnly();
@@ -106,7 +149,7 @@ function drawMainVisualizer() {
   if (playbackBar) {
     playbackBar.display();
   }
-  if (triggers) triggers.reset();
+
 }
 
 function drawIntro() {

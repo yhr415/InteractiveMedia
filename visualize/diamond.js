@@ -120,7 +120,7 @@ function setupDiamondsLayout() {
     // 다이아몬드 생성 및 배열 추가
     diamonds.push(new DiamondVisual(
       px, 
-      py + 30, // 약간 아래로 이동
+      py, // 약간 아래로 이동
       30, 
       "DIAMOND_SCALE", 
       "DIAMOND_HIT", 
