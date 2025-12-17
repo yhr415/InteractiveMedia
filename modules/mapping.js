@@ -34,5 +34,5 @@ function manualMapping() {
   // setTrackConfig(2, "MAIN_SCALE", false);
   // setTrackConfig(4, "SUB_SCALE", true); 
 
-  // console.log("=== [수동 매핑 완료] ===");
+  console.log("=== [수동 매핑 완료] ===");
 }

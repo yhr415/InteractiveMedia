@@ -68,6 +68,7 @@ async function loadSingleMidiAndSplitTracks(fileName) {
   } catch (e) {
     console.error("MIDI 로딩 실패:", e);
   }
+  manualMapping();
 }
 
 // fillNoteEvents 함수는 JS 라이브러리를 쓰면 필요 없어져서 삭제했습니다.
@@ -84,6 +85,7 @@ function setTrackConfig(index, tag, isVisible) {
     console.warn(`[경고] 트랙 번호 틀림: ${index}번 트랙은 없습니다.`);
   }
 }
+
 
 // ==================================================
 // ★ 블러 네온 (하트용) - drawBlurryNeon

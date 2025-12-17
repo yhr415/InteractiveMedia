@@ -1,6 +1,3 @@
-// ==========================================
-// 원형 트랙 시각화 (Visible Only)
-// ==========================================
 function drawCircleVisibleOnly() {
   // === [세팅] ===
   let cx = 0;
@@ -86,27 +83,26 @@ function drawCircleVisibleOnly() {
   }
 }
 
-// ==========================================
-// HeartVisual 클래스
-// ==========================================
 class HeartVisual {
-  constructor(x, y, size, isMain, idNumber, scaleTag, drawTag, c) {
+  // 1. 생성자: setupHeartsLayout에서 넘겨주는 8개 값을 순서대로 받음
+  constructor(x, y, size, isMain, id, scaleTag, drawTag, c) {
     this.x = x;
     this.y = y;
     this.baseSize = size;
-    this.isMain = isMain;
-    this.idNumber = idNumber;
-    this.scaleTag = scaleTag;
-    this.drawTag = drawTag;
-    this.myColor = c; // p5.color 객체
+    this.isMain = isMain;     // true면 네온(메인), false면 채우기(서브)
+    this.idNumber = id;       // 0, 1, 2... 번호
+    this.scaleTag = scaleTag; // 크기 조절 신호 이름
+    this.drawTag = drawTag;   // 그리기/투명도 신호 이름
+    this.myColor = c;         // 색상
   }
 
+  // 2. 그리기 함수 (형님이 짜신 로직 그대로 적용!)
   display() {
     // triggers가 존재하는지 안전하게 확인
     let scalePower = (this.scaleTag && typeof triggers !== 'undefined') ? triggers.get(this.scaleTag) : 0;
     let drawPower  = (this.drawTag && typeof triggers !== 'undefined') ? triggers.get(this.drawTag) : 0;
 
-    push(); // pushMatrix() -> push()
+    push(); // 좌표 저장
     translate(this.x, this.y);
 
     let scaleFactor = 30;
@@ -114,40 +110,45 @@ class HeartVisual {
     // 1. 스케일 강도 결정
     if (this.isMain) {
       if (this.idNumber === 0) {
-        scaleFactor = 80;
+        scaleFactor = 80; // 0번(대장)은 크게 쿵쿵
       } else {
-        scaleFactor = 40; // 1번, 2번 하트는 약하게 커짐
+        scaleFactor = 40; // 1번, 2번 하트는 적당히 쿵쿵
       }
     }
 
+    // 현재 크기 계산
     let currentSize = this.baseSize + (scalePower * scaleFactor);
 
-    // 2. [isMain] 하트 그리기 로직 (네온만 O)
+    // 2. [isMain] 메인 하트 그리기 로직 (네온 스타일)
     if (this.isMain) {
+      // 신호가 조금이라도 있을 때만 그림
       if (drawPower > 0.01) {
         noFill();
         
+        // p5.js Color 객체 분해 (투명도 조절용)
         let r = red(this.myColor);
         let g = green(this.myColor);
         let b = blue(this.myColor);
 
-        stroke(r, g, b, 255);
-        strokeWeight(3);
-
+        // 팝핑 효과 (번쩍일 때 살짝 더 커짐)
         let popScale = map(drawPower, 0, 1, 0.9, 1.3);
         let w = currentSize * 1.7 * popScale;
         let h = currentSize * popScale;
 
-        // drawBlurryNeon 함수가 정의되어 있어야 함 (이전 코드에 있거나 별도 정의 필요)
+        // ★ 네온 블러 함수 사용 (modules/utils.js에 있어야 함)
         if (typeof drawBlurryNeon === 'function') {
           drawBlurryNeon(0, 0, w, h, this.myColor, drawPower);
         } else {
-          // 함수가 없을 경우 기본 하트라도 그림
+          // 함수가 없을 경우 기본 선으로 그리기 (안전장치)
+          stroke(r, g, b, 255);
+          strokeWeight(3);
           drawHeartShape(0, 0, w, h);
         }
       }
-    } else {
-      // [서브 하트]
+    } 
+    // 3. [!isMain] 서브 하트 그리기 로직 (면 채우기 스타일)
+    else {
+      // drawTag가 있으면 신호에 따라 투명도 조절, 없으면 불투명(255)
       let alphaVal = (this.drawTag) ? map(drawPower, 0, 1, 0, 255) : 255;
       
       if (alphaVal > 1) {
@@ -158,22 +159,23 @@ class HeartVisual {
         fill(r, g, b, alphaVal);
         noStroke();
         
+        // 서브 하트는 너비 비율 1.7
         drawHeartShape(0, 0, currentSize * 1.7, currentSize);
         
+        // 번호 표시 (디버깅용 혹은 디자인용)
         if (this.idNumber > 0) {
           fill(255, alphaVal);
-          textAlign(CENTER, CENTER); // 텍스트 정렬 추가
+          textAlign(CENTER, CENTER);
+          textSize(14);
           text(this.idNumber, 0, 5);
         }
       }
     }
-    pop(); // popMatrix() -> pop()
+    
+    pop(); // 좌표 복구
   }
 }
 
-// ==========================================
-// 하트 모양 그리기 함수 (Bezier)
-// ==========================================
 function drawHeartShape(x, y, w, h) {
   let topY = y - h * 0.35;
   let bottomY = y + h * 0.55;

@@ -1,20 +1,19 @@
-// ====== p5.js는 리소스 로딩을 preload에서 하는 게 국룰 ======
 function preload() {
   soundFormats('mp3', 'ogg');
   musicFile = loadSound('data/lov3.mp3');
-  // 주의: MIDI 파일 파싱은 JS에서 복잡해서 별도 라이브러리(Tone.js 등)나 JSON 변환이 필요할 수 있음
-  // 일단 구조만 유지합니다.
 }
 
 function setup() {
-  console.log("형님! 셋업 시작했습니다!");
-  createCanvas(1100, 900); // size() -> createCanvas()
+  createCanvas(1100, 900);
+
+  //웹캠 세팅, 글자 세팅
+  setupCamera();
+  setupLetters();
   
-  triggers = new TriggerManager(); // 클래스가 정의되어 있다고 가정
+  triggers = new TriggerManager();
 
   // MIDI 로딩 함수 호출 (JS에 맞게 구현 필요)
   loadSingleMidiAndSplitTracks(mainMidiFile);
-  manualMapping();
   
   noSmooth();
   noStroke();
@@ -28,54 +27,19 @@ function setup() {
   setupGlitchesLayout();
   setupArcsLayout();
   setupSubHeartsLayout();
-  
-  startPlayback();
 }
 
 function draw() {
-  // Trigger 리셋
-  if(triggers) triggers.reset();
 
-  let currentMillis = millis() - t0;
-
-  // for (SynthTrack t : tracks) 문법 변경
-  for (let t of tracks) {
-    t.update(currentMillis);
+  if (gameState === "INTRO") {
+    drawIntro(); 
+    return; // 여기서 끊어줘야 밑에 코드가 실행 안 됨
   }
 
-  background(0);
-  
-  push(); // pushMatrix() -> push()
-  translate(width / 2, height / 2);
-
-  // 트리거 값 가져오기
-  let subPower = triggers.get("SUB_DRAW");
-
-  // 서브 하트 랜덤 활성화 로직
-  if (subPower > 0.1 && subHearts.length > 0) {
-    // (int)random() -> floor(random())
-    let randomIndex = floor(random(subHearts.length));
-    subHearts[randomIndex].activate(subPower);
+  // 2. 플레이 상태 (비주얼라이저)
+  if (gameState === "PLAYING") {
+    drawMainVisualizer(); 
   }
-
-  // 서브 하트 루프
-  for (let sh of subHearts) {
-    sh.update();
-    sh.display();
-  }
-
-  if(noiseField) noiseField.updateAndDisplay();
-
-  // 나머지 비주얼 객체 루프
-  for (let h of hearts) h.display();
-  for (let o of orbs) o.display();
-  for (let a of arcs) a.display();
-  for (let d of diamonds) d.display();
-  for (let g of glitches) g.display();
-
-  drawCircleVisibleOnly();
-
-  pop(); // popMatrix() -> pop()
 }
 
 // ==========================================
@@ -95,5 +59,21 @@ function startPlayback() {
 function keyPressed() {
   if (key === 'r' || key === 'R') {
     startPlayback();
+  }
+}
+
+function mousePressed() {
+  if (gameState === "INTRO") {
+    for (let l of letters) {
+      l.pressed();
+    }
+  }
+}
+
+function mouseReleased() {
+  if (gameState === "INTRO") {
+    for (let l of letters) {
+      l.released();
+    }
   }
 }

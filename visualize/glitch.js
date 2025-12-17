@@ -124,7 +124,7 @@ class GlitchVisual {
       rectMode(CENTER);
       noFill();
       stroke(255, this.alpha);
-      strokeWeight(2);
+      noStroke();
       rect(cx, cy, cw, ch);
     }
 
