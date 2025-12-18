@@ -197,6 +197,8 @@ function setupHeartsLayout() {
   // hearts 배열은 전역에 선언되어 있어야 함 (let hearts = [])
   
   // 1. [중앙] 메인 하트 (0, 0)
+  hearts = [];
+
   let mainHeart = new HeartVisual(0, 0, 200, true, 0, "MAIN_SCALE", "MAIN_DRAW", color(255, 0, 0));
   hearts.push(mainHeart); // add -> push
 

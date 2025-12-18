@@ -61,7 +61,6 @@ function resetGame() {
   t0 = millis();
   
   // 2. 모든 배열 싹 비우기 (중요!)
-  tracks = [];
   hearts = [];
   diamonds = [];
   glitches = [];
@@ -88,6 +87,13 @@ function resetGame() {
   setupGlitchesLayout();
   setupArcsLayout();
   setupSubHeartsLayout();
+
+  if (musicFile) {
+    musicFile.stop();
+    if (typeof fft !== 'undefined') {
+      fft.setInput(musicFile); // 분석기 입력을 다시 잡아줌
+    }
+  }
 }
 
 function checkGameClear() {
